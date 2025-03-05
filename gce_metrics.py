@@ -30,12 +30,25 @@ class GCEMetricsFetcher:
         
         for result in results:
             instance_id = result.resource.labels["instance_id"]
-            # print("results",result.points)
             # latest_point = result.points[-2] if result.points else None
             # metric_value = latest_point.value.double_value if latest_point else 0
             # metric_data[instance_id] = metric_value
 
-            max_value = max((point.value.int64_value for point in result.points), default=0)
+            max_value=0
+            for point in result.points:
+                # print(point.value)
+                # print(type(point.value))
+                # print(dir(point.value)) 
+                if point.value.double_value != 0.0:
+                    value = point.value.double_value
+                    max_value=max(value,max_value)
+                elif point.value.int64_value != 0:
+                    value = point.value.int64_value
+                    max_value=max(value,max_value)
+
+            # max_value = max((point.value.int64_value for point in result.points), default=0)
+            
+            
             metric_data[instance_id] = max_value
 
         return metric_data
@@ -44,7 +57,7 @@ class GCEMetricsFetcher:
         """Fetch CPU utilization (percentage) for all instances."""
         raw_data = self._fetch_metric("compute.googleapis.com/instance/cpu/utilization", 10)
         # print("cpu utilization",raw_data)
-        return {key: value * 100 for key, value in raw_data.items()}  # Convert to percentage
+        return {key: value * 10 for key, value in raw_data.items()}  # Convert to percentage
 
     def get_cpu_usage_time(self):
         """Fetch CPU usage time for all instances."""
@@ -56,10 +69,10 @@ class GCEMetricsFetcher:
 
     def get_system_uptime(self):
         """Fetch system uptime for all instances."""
-        return self._fetch_metric("compute.googleapis.com/instance/uptime_total", 100)
+        return self._fetch_metric("compute.googleapis.com/instance/uptime_total", 10)
     def get_reserved_cpu_cores(self):
         """Fetch reserved cores for all instances."""
-        return self._fetch_metric("compute.googleapis.com/instance/cpu/reserved_cores",100)
+        return self._fetch_metric("compute.googleapis.com/instance/cpu/reserved_cores",10)
 
     def get_disk_average_io_latency(self):
         """Fetch disk average io latency."""
@@ -67,17 +80,29 @@ class GCEMetricsFetcher:
 
 
     def get_read_ops_count(self):
-        """Fetch Count of disk IO operations"""
+        """Fetch Count of disk read IO operations"""
         return self._fetch_metric("compute.googleapis.com/instance/disk/read_ops_count",10)
+    def get_write_ops_count(self):
+        """Fetch Count of disk write IO operations"""
+        return self._fetch_metric("compute.googleapis.com/instance/disk/write_ops_count",10)
+    
+    
 
     def get_sent_packets_count(self):
-        return self._fetch_metric("compute.googleapis.com/instance/network/sent_packets_count",100)
+        return self._fetch_metric("compute.googleapis.com/instance/network/sent_packets_count",10)
     def get_write_bytes_count(self):
         return self._fetch_metric("compute.googleapis.com/instance/disk/write_bytes_count",10)
     
-    def get_firewall_dropped_count(self):
+    def get_firewall_dropped_packets_count(self):
         return self._fetch_metric("compute.googleapis.com/firewall/dropped_packets_count",10)
     
+    def get_ram_usage(self):
+        """Fetch ram usage for all instances"""
+        return self._fetch_metric("compute.googleapis.com/instance/memory/balloon/ram_used",10)
+    
+    def get_ram_size(self):
+        """Fetch ram size for all instances"""
+        return self._fetch_metric("compute.googleapis.com/instance/memory/balloon/ram_size",10)
 
     def get_instance_details(self):
         """Fetch instance details such as name and machine type."""
@@ -96,28 +121,42 @@ class GCEMetricsFetcher:
         disk_read_ops_count=self.get_read_ops_count()
         network_sent_packets_count=self.get_sent_packets_count()
         write_bytes_count=self.get_write_bytes_count()
-        dropped_packets_count=self.get_firewall_dropped_count()
-        print("firewall dropped packets count",dropped_packets_count)
-        print("Write bytes count :",write_bytes_count)
+        dropped_packets_count=self.get_firewall_dropped_packets_count()
+        write_ops_count=self.get_write_ops_count()
+        ram_used=self.get_ram_usage()
+        ram_size=self.get_ram_size()
         
-        print("sent packets count",network_sent_packets_count)
-        print("disk read ops",disk_read_ops_count)
-        print("reserved-cores",reserved_cores)
-        print("disk_average_io_latency",disk_io_latency)
-        print("\nInstance Metrics Report:")
-        print("=" * 80)
-        print(f"{'Instance':<20} | {'Machine Type':<15} | {'CPU (%)':<10} | {'Read Ops':<10} | {'CPU Usage Time':<10} | {'Uptime (s)'}")
-        print("=" * 80)
 
-        for instance_id, details in instance_details.items():
-            cpu_usage = round(cpu_utilization.get(str(instance_id), 0))
-            read_ops = round(disk_read_ops.get(str(instance_id), 0))
-            cpu_time = round(cpu_usage_time.get(str(instance_id), 0))
-            uptime = round(system_uptime.get(str(instance_id), 0))
-            reserved_vCpus=reserved_cores.get(str(instance_id),0)
-            average_io_latency=disk_io_latency.get(str(instance_id),0)
+        # print("ram size: ",ram_used)
+        # print("cpu utilization",cpu_utilization)
 
-            print(f"{details['name']:<20} | {details['machine_type']:<15} | {cpu_usage:<10} | {read_ops:<10} | {cpu_time:<10} | {uptime}")
+        print("ram_size: ",ram_size)
+        print("ram_used : ",ram_used) #will give the output in bytes
+        print("write ops count : ",write_ops_count)
+        print("firewall dropped packets count : ",dropped_packets_count)
+        print("Write bytes count : ",write_bytes_count)
+        print("sent packets count : ",network_sent_packets_count)
+        print("disk read ops : ",disk_read_ops_count)
+        print("reserved-cores : ",reserved_cores)
+        print("disk_average_io_latency : ",disk_io_latency)
+        print("System uptime : ",system_uptime)
+        print("CPU Utilization : ",cpu_utilization)
+        print("CPU Usage time : ",cpu_usage_time)
+        
+        # print("\nInstance Metrics Report : ")
+        # print("=" * 80)
+        # print(f"{'Instance':<20} | {'Machine Type':<15} | {'CPU (%)':<10} | {'Read Ops':<10} | {'CPU Usage Time':<10} | {'Uptime (s)'}")
+        # print("=" * 80)
+
+        # for instance_id, details in instance_details.items():
+        #     cpu_usage = round(cpu_utilization.get(str(instance_id), 0))
+        #     read_ops = round(disk_read_ops.get(str(instance_id), 0))
+        #     cpu_time = round(cpu_usage_time.get(str(instance_id), 0))
+        #     uptime = round(system_uptime.get(str(instance_id), 0))
+        #     reserved_vCpus=reserved_cores.get(str(instance_id),0)
+        #     average_io_latency=disk_io_latency.get(str(instance_id),0)
+
+        #     print(f"{details['name']:<20} | {details['machine_type']:<15} | {cpu_usage:<10} | {read_ops:<10} | {cpu_time:<10} | {uptime}")
 
 if __name__ == "__main__":
     PROJECT_ID = "digital-splicer-448505-f3"
