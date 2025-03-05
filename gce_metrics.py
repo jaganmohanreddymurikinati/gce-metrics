@@ -90,6 +90,11 @@ class GCEMetricsFetcher:
 
     def get_sent_packets_count(self):
         return self._fetch_metric("compute.googleapis.com/instance/network/sent_packets_count",10)
+    
+    def get_network_received_packets_count(self):
+        return self._fetch_metric("compute.googleapis.com/instance/network/received_packets_count",10)
+    
+
     def get_write_bytes_count(self):
         return self._fetch_metric("compute.googleapis.com/instance/disk/write_bytes_count",10)
     
@@ -103,6 +108,27 @@ class GCEMetricsFetcher:
     def get_ram_size(self):
         """Fetch ram size for all instances"""
         return self._fetch_metric("compute.googleapis.com/instance/memory/balloon/ram_size",10)
+
+    def get_early_boot_validation_status(self):
+        """Fetch metrics for early boot validation status"""
+        return self._fetch_metric("compute.googleapis.com/instance/integrity/early_boot_validation_status",10)
+
+    def get_late_boot_validation_status(self):
+        """Fetch metrics for early boot validation status"""
+        return self._fetch_metric("compute.googleapis.com/instance/integrity/late_boot_validation_status",10)
+   
+    def get_nat_sent_packets_count(self):
+        return self._fetch_metric("compute.googleapis.com/nat/sent_packets_count",10)
+
+    def get_egress_packets_count(self):
+        return self._fetch_metric("networking.googleapis.com/vm_flow/egress_packets_count",10)
+    
+    def get_ingress_packets_count(self):
+        return self._fetch_metric("networking.googleapis.com/vm_flow/ingress_packets_count",10)
+    
+    def get_probe_count(self):
+        return self._fetch_metric("networking.googleapis.com/cloud_netslo/active_probing/probe_count")
+    
 
     def get_instance_details(self):
         """Fetch instance details such as name and machine type."""
@@ -125,11 +151,28 @@ class GCEMetricsFetcher:
         write_ops_count=self.get_write_ops_count()
         ram_used=self.get_ram_usage()
         ram_size=self.get_ram_size()
+        early_boot_validation_status=self.get_early_boot_validation_status()
+        late_boot_validation_status=self.get_late_boot_validation_status()
+        network_received_packets_count=self.get_network_received_packets_count()
+        nat_sent_packets_count=self.get_nat_sent_packets_count()
+        egress_packets_count=self.get_egress_packets_count()
+        ingress_packets_count=self.get_egress_packets_count()
+        probe_count=self.get_probe_count()
+
+
+        print("System uptime : ",system_uptime)
+        print("CPU Utilization : ",cpu_utilization)
+        print("CPU Usage time : ",cpu_usage_time)
+        print("reserved-cores : ",reserved_cores)
+        print("disk_average_io_latency : ",disk_io_latency)
         
-
-        # print("ram size: ",ram_used)
-        # print("cpu utilization",cpu_utilization)
-
+        print("probe count",probe_count)
+        print("Ingress packets count : ", ingress_packets_count)
+        print("Egress packets count : ", egress_packets_count)
+        print("nat:",nat_sent_packets_count)
+        print("network received packets count : ",network_received_packets_count)
+        print("Early boot validation status : ",early_boot_validation_status)
+        print("Late boot validation status : ",late_boot_validation_status)
         print("ram_size: ",ram_size)
         print("ram_used : ",ram_used) #will give the output in bytes
         print("write ops count : ",write_ops_count)
@@ -137,12 +180,9 @@ class GCEMetricsFetcher:
         print("Write bytes count : ",write_bytes_count)
         print("sent packets count : ",network_sent_packets_count)
         print("disk read ops : ",disk_read_ops_count)
-        print("reserved-cores : ",reserved_cores)
-        print("disk_average_io_latency : ",disk_io_latency)
-        print("System uptime : ",system_uptime)
-        print("CPU Utilization : ",cpu_utilization)
-        print("CPU Usage time : ",cpu_usage_time)
         
+       
+
         # print("\nInstance Metrics Report : ")
         # print("=" * 80)
         # print(f"{'Instance':<20} | {'Machine Type':<15} | {'CPU (%)':<10} | {'Read Ops':<10} | {'CPU Usage Time':<10} | {'Uptime (s)'}")
